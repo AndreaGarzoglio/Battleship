@@ -3,84 +3,123 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Linked List</title>
+    <title>BATTLESHIP.EXE</title>
   </head>
 
   <body>
-    <div class="layout">
-      <div class="header">
-        <span class="badge">Data Structure</span>
-        <h1>Linked List</h1>
-        <p class="description">
-          Interact with a singly linked list. Add, remove, and query nodes in
-          real time.
-        </p>
+    <canvas id="matrix-bg"></canvas>
+    <div class="scanlines"></div>
+
+    <div class="container">
+      <div class="terminal-bar">
+        <span class="terminal-dot red"></span>
+        <span class="terminal-dot yellow"></span>
+        <span class="terminal-dot green"></span>
+        <span class="terminal-title">root@intrusion-detect:~$</span>
       </div>
 
-      <div class="state-card">
-        <p class="label">Current List</p>
-        <div id="list-state" class="state-box">null</div>
+      <h1>BATTLESHIP.EXE</h1>
+      <p class="subtitle">// Network Intrusion Countermeasure Simulator</p>
+
+      <div id="briefing"></div>
+
+      <div id="menu-phase">
+        <h2>Choose Your Opponents</h2>
+
+        <fieldset>
+          <legend>Player 1</legend>
+          <input type="text" id="p1-name" placeholder="Name" value="Player 1" />
+          <label><input type="checkbox" id="p1-computer" /> Computer</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Player 2</legend>
+          <input type="text" id="p2-name" placeholder="Name" value="Player 2" />
+          <label
+            ><input type="checkbox" id="p2-computer" checked /> Computer</label
+          >
+        </fieldset>
+
+        <button id="menu-continue">Continue</button>
       </div>
 
-      <div class="panels">
-        <div class="panel">
-          <p class="label">Mutate</p>
-          <div class="control-group">
-            <button id="btn-append">Append</button>
-            <input id="append-val" type="text" placeholder="Value" />
-          </div>
-          <div class="control-group">
-            <button id="btn-prepend">Prepend</button>
-            <input id="prepend-val" type="text" placeholder="Value" />
-          </div>
-          <div class="control-group">
-            <button id="btn-insert">Insert At</button>
-            <input
-              id="insert-index"
-              type="number"
-              placeholder="Index"
-              min="0"
-            />
-            <input id="insert-val" type="text" placeholder="Value" />
-          </div>
-          <div class="control-group">
-            <button id="btn-remove">Remove At</button>
-            <input
-              id="remove-index"
-              type="number"
-              placeholder="Index"
-              min="0"
-            />
-          </div>
-          <div class="control-group">
-            <button id="btn-pop" class="btn-danger">Pop head</button>
+      <div id="pass-phase" hidden>
+        <h2 id="pass-message"></h2>
+        <button id="pass-ready">Ready</button>
+      </div>
+
+      <div id="placement-phase" hidden>
+        <h2>Place Your Ships</h2>
+        <div id="ship-dock"></div>
+        <button id="reset-placement">Reset</button>
+        <button id="start-game" disabled>Start Game</button>
+      </div>
+
+      <p id="turn-indicator"></p>
+      <button id="next-turn" hidden>Next Turn</button>
+
+      <div class="boards-row">
+        <div class="board-column" id="player-board-wrapper" hidden>
+          <h2 id="player-board-label">Your Board</h2>
+          <div class="board-frame">
+            <div class="board-corner"></div>
+            <div class="board-col-labels">
+              <span>A</span><span>B</span><span>C</span><span>D</span
+              ><span>E</span><span>F</span><span>G</span><span>H</span
+              ><span>I</span><span>J</span>
+            </div>
+            <div class="board-row-labels">
+              <span>1</span><span>2</span><span>3</span><span>4</span
+              ><span>5</span><span>6</span><span>7</span><span>8</span
+              ><span>9</span><span>10</span>
+            </div>
+            <div id="player-board" class="board"></div>
           </div>
         </div>
 
-        <div class="panel">
-          <p class="label">Query</p>
-          <div class="control-group">
-            <button id="btn-at">At</button>
-            <input id="at-index" type="number" placeholder="Index" min="0" />
+        <div class="board-column" id="battle-phase" hidden>
+          <h2 id="computer-board-label">Enemy Board</h2>
+          <div class="board-frame">
+            <div class="board-corner"></div>
+            <div class="board-col-labels">
+              <span>A</span><span>B</span><span>C</span><span>D</span
+              ><span>E</span><span>F</span><span>G</span><span>H</span
+              ><span>I</span><span>J</span>
+            </div>
+            <div class="board-row-labels">
+              <span>1</span><span>2</span><span>3</span><span>4</span
+              ><span>5</span><span>6</span><span>7</span><span>8</span
+              ><span>9</span><span>10</span>
+            </div>
+            <div id="computer-board" class="board"></div>
           </div>
-          <div class="control-group">
-            <button id="btn-contains">Contains</button>
-            <input id="contains-val" type="text" placeholder="Value" />
-          </div>
-          <div class="control-group">
-            <button id="btn-find">Find Index</button>
-            <input id="find-val" type="text" placeholder="Value" />
-          </div>
-          <div class="control-group">
-            <button id="btn-size">Size</button>
-          </div>
-          <div class="control-group">
-            <button id="btn-tail">Tail</button>
-          </div>
-          <div id="query-result" class="query-result hidden"></div>
         </div>
       </div>
-      <div id="error-msg" class="error-msg hidden"></div>
+
+      <div id="game-over" hidden>
+        <button id="play-again">Play Again</button>
+      </div>
+
+      <div id="companions-row" class="companions-row" hidden>
+        <div id="companion-ai" class="companion">
+          <span id="companion-ai-face" class="companion-face on-turn"
+            >&lt;| ˶ᵔ ᵕ ᵔ˶ |&gt;</span
+          >
+          <p id="companion-ai-line" class="companion-line">
+            Choose your opponents to begin.
+          </p>
+        </div>
+        <div id="companion-malware" class="companion">
+          <span id="companion-malware-face" class="companion-face"
+            >&lt;| ⌐■_■ |&gt;</span
+          >
+          <p id="companion-malware-line" class="companion-line">...</p>
+        </div>
+      </div>
+
+      <footer class="site-footer">
+        // Battleship Project by Andrea Garzoglio for The Odin Project
+      </footer>
     </div>
   </body>
 </html>
