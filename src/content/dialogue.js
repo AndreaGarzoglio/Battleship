@@ -23,7 +23,7 @@ const FACES = {
 // the premise before the player ever touches the menu
 const LORE = [
   "SYSTEM ALERT: unauthorized process detected on this network.",
-  "Codename: MALWARE. Objective: extract your root password.",
+  "Codename: BATTLESHIP. Objective: extract your root password.",
   "You have one advantage - it doesn't know exactly where you are yet.",
   "Deploy your defenses. Find it before it finds you.",
   "Good luck, Operator. The network is counting on you.",
