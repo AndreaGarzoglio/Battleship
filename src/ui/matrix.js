@@ -57,10 +57,8 @@ function initMatrixRain() {
       }
 
       trail.forEach((glyph, idx) => {
-        // fractional row (not snapped to currentRow) so the column scrolls
-        // smoothly between glyph spawns instead of jumping a full row at a time
-        const row = drops[i] - (trail.length - 1 - idx);
-        if (row < -1) return;
+        const row = currentRow - (trail.length - 1 - idx);
+        if (row < 0) return;
         const fade = (idx + 1) / trail.length; // 0 (oldest) -> 1 (current head)
         ctx.fillStyle = glyph.red
           ? `rgba(239,68,68,${0.55 * fade})`
