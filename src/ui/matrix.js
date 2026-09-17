@@ -11,38 +11,53 @@ function initMatrixRain() {
   if (reduceMotion) return;
 
   const ctx = canvas.getContext("2d");
-  const fontSize = 15;
+  const fontSize = 18;
+  const rowsPerSecond = 7; // base fall speed, independent of frame rate
   const chars = "01アイウエオカキクケコサシスセソ$#@%&*+-<>/\\|";
-  const trailLength = 12; // frames a glyph stays visible before being fully dropped
-  let width, height, columns, drops, trails, timer;
+  const trailLength = 24; // rows a glyph stays visible before being fully dropped
+  let width, height, columns, drops, speeds, trails, lastRow, rafId, lastTime;
 
   function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
     columns = Math.max(1, Math.floor(width / fontSize));
     drops = new Array(columns).fill(0).map(() => Math.random() * -50);
+    // per-column speed variance keeps columns from drifting back into sync
+    // after a few respawn cycles, which read as the whole screen pausing
+    // and refilling in a visible "wave"
+    speeds = new Array(columns)
+      .fill(0)
+      .map(() => rowsPerSecond * (0.75 + Math.random() * 0.5));
+    lastRow = drops.map((d) => Math.floor(d));
     trails = new Array(columns).fill(null).map(() => []); // per column: recent { char, red } entries, oldest first
   }
 
   // fully redraws every frame from `trails` state alone - no compositing
   // decay, so a glyph's disappearance never depends on display color
   // precision the way painting a translucent rect over it every frame would
-  function draw() {
+  function draw(dt) {
     ctx.fillStyle = "#030407";
     ctx.fillRect(0, 0, width, height);
     ctx.font = fontSize + "px monospace";
 
     for (let i = 0; i < columns; i++) {
-      const trail = trails[i];
-      trail.push({
-        char: chars[Math.floor(Math.random() * chars.length)],
-        red: Math.random() < 0.015,
-      });
-      if (trail.length > trailLength) trail.shift(); // oldest glyph is gone for good, not just dimmed
+      drops[i] += speeds[i] * dt;
 
-      const headRow = Math.floor(drops[i]);
+      const currentRow = Math.floor(drops[i]);
+      const trail = trails[i];
+      // spawn one new glyph per row crossed, so glyph cadence stays tied to
+      // vertical distance travelled rather than to frame timing
+      while (lastRow[i] < currentRow) {
+        trail.push({
+          char: chars[Math.floor(Math.random() * chars.length)],
+          red: Math.random() < 0.015,
+        });
+        if (trail.length > trailLength) trail.shift(); // oldest glyph is gone for good, not just dimmed
+        lastRow[i]++;
+      }
+
       trail.forEach((glyph, idx) => {
-        const row = headRow - (trail.length - 1 - idx);
+        const row = currentRow - (trail.length - 1 - idx);
         if (row < 0) return;
         const fade = (idx + 1) / trail.length; // 0 (oldest) -> 1 (current head)
         ctx.fillStyle = glyph.red
@@ -51,22 +66,37 @@ function initMatrixRain() {
         ctx.fillText(glyph.char, i * fontSize, row * fontSize);
       });
 
-      const y = drops[i] * fontSize;
-      if (y > height && Math.random() > 0.975) {
-        drops[i] = 0;
-        trail.length = 0; // restart clean from the top, no leftover tail jumping there with it
+      // only restart once the whole trail (including its tail) has fallen
+      // past the bottom edge, so glyphs keep sinking below the screen
+      // instead of vanishing the instant the head crosses it
+      const tailY = (currentRow - trail.length + 1) * fontSize;
+      if (tailY > height) {
+        drops[i] = Math.random() * -50; // respawn above the viewport, never below it
+        speeds[i] = rowsPerSecond * (0.75 + Math.random() * 0.5); // re-roll so cycles keep drifting apart
+        lastRow[i] = Math.floor(drops[i]);
+        trail.length = 0;
       }
-      drops[i]++;
     }
+  }
+
+  function tick(time) {
+    const dt = Math.min((time - lastTime) / 1000, 0.1); // clamp to avoid jumps after tab was hidden
+    lastTime = time;
+    draw(dt);
+    rafId = requestAnimationFrame(tick);
   }
 
   resize();
   window.addEventListener("resize", resize);
-  timer = setInterval(draw, 55);
+  lastTime = performance.now();
+  rafId = requestAnimationFrame(tick);
 
   document.addEventListener("visibilitychange", () => {
-    clearInterval(timer);
-    if (!document.hidden) timer = setInterval(draw, 55);
+    cancelAnimationFrame(rafId);
+    if (!document.hidden) {
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(tick);
+    }
   });
 }
 
